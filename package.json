@@ -1,0 +1,59 @@
+{
+  "name": "ocpr12-argentbank",
+  "version": "1.0.0",
+  "description": "Utilisez une API pour un compte utilisateur bancaire avec React",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexiGrigorov/OCPR12-ArgentBank.git"
+  },
+  "author": "Alexi GRIGOROV",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alexiGrigorov/OCPR12-ArgentBank/issues"
+  },
+  "homepage": "https://github.com/alexiGrigorov/OCPR12-ArgentBank#readme",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "bcrypt": "^5.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.9.21",
+    "swagger-ui-express": "^4.1.4",
+    "yamljs": "^0.3.0",
+    
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "@reduxjs/toolkit": "^2.6.1",
+    "react-redux": "^9.2.0",
+    "react-router": "^7.4.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.23.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.0.0",
+
+    "nodemon": "^2.0.4",
+    "prettier": "^3.5.3",
+    "vite": "^6.2.3"
+  },
+  "scripts": {
+    "format": "prettier --write \"src/**/*.{html,css,js,jsx,ts,tsx}\"",
+    "lint": "eslint",
+    "dev": "vite",
+    "build": "vite build",
+    "postbuild": "cp dist/index.html dist/404.html",
+    "preview": "vite preview",
+  
+    "dev:server": "nodemon ./server/server.js",
+    "populate-db": "node ./server/scripts/populateDatabase.js",
+    "server": "node ./server/server.js"
+  }
+}
