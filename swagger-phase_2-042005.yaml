@@ -1,0 +1,1062 @@
+openapi: 3.1.0
+
+info:
+  title: ArgentBank - Full API Specification
+  description: |
+    Combined API for user authentication, profile, accounts, and transactions.
+
+    **CORS Policy (Production):**
+    - Only `https://app.argentbank.com` is allowed.
+    - CORS with credentials is supported.
+    - Allowed methods: `GET`, `POST`, `PATCH`
+  version: 2.0.0
+  termsOfService: http://swagger.io/terms/
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local server (HTTP only, for development purposes)
+  - url: https://api.argentbank.com/v1
+    description: Production server (HTTPS required)
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: User Module
+    description: Operations related to user authentication and profile management.
+  - name: Account Module
+    description: Endpoints for retrieving and managing bank accounts.
+  - name: Transaction Module
+    description: Endpoints for viewing and updating transactions.
+
+paths:
+  /user/login:
+    post:
+      security: []
+      tags:
+        - User Module
+      summary: User login
+      description: |
+        Authenticate a user and return a JWT token.
+
+        **Rate Limiting:**  
+        - Max 5 attempts per minute per IP.  
+        - Account is locked for 15 minutes after 5 failed attempts.
+      operationId: loginUser
+      requestBody:
+        description: Payload containing user login credentials.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            examples:
+              default:
+                $ref: "#/components/examples/LoginRequestExample"
+      responses:
+        "200":
+          description: User logged in successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticationResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/AuthenticationResponseExample"
+        "400":
+          description: Bad request, invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/ValidationErrorResponseExample"
+        "401":
+          description: Unauthorized, invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            Forbidden, user not allowed to access this resource.
+
+            **Possible Reasons:**
+            - Account is locked due to multiple failed login attempts.
+            - User is banned or restricted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /user/signup:
+    post:
+      security: []
+      tags:
+        - User Module
+      summary: User signup
+      description: |
+        Register a new user and return a JWT token.
+
+        **Rate Limiting:**  
+        - Max 3 signup attempts per minute per IP.  
+        - Duplicate emails will return HTTP 409 Conflict.
+      operationId: signupUser
+      requestBody:
+        description: Payload containing user signup information.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+            examples:
+              default:
+                $ref: "#/components/examples/SignupRequestExample"
+      responses:
+        "201":
+          description: User registered successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupResponse"
+        "400":
+          description: Bad request, invalid or missing fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/ValidationErrorResponseExample"
+        "409":
+          description: Conflict, user already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /user/profile:
+    get:
+      tags:
+        - User Module
+      summary: Get user profile
+      description: Retrieve the authenticated user's profile information.
+      operationId: getUserProfile
+      responses:
+        "200":
+          description: User profile retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized, invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden, user not allowed to access this resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found, user does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags:
+        - User Module
+      summary: Update user profile
+      description: Update the authenticated user's profile information.
+      operationId: updateUserProfile
+      requestBody:
+        description: Payload containing user profile information to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserProfileRequest"
+      responses:
+        "200":
+          description: User profile updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/UserProfileResponseExample"
+        "400":
+          description: Bad request, invalid fields to update.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/ValidationErrorResponseExample"
+        "401":
+          description: Unauthorized, invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden, user not allowed to access this resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found, user does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts:
+    get:
+      tags:
+        - Account Module
+      summary: Retrieve all user bank accounts.
+      description: Retrieve all accounts associated with the authenticated user.
+      operationId: getUserAccounts
+      responses:
+        "200":
+          description: List of bank accounts retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountsListResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/AccountsListResponseExample"
+        "401":
+          description: Unauthorized, invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden, user not allowed to access this resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts/{accountId}:
+    get:
+      tags:
+        - Account Module
+      summary: Retrieve a specific bank account
+      description: Fetch metadata about the specified bank account (e.g., type, balance).
+      operationId: getAccountById
+      parameters:
+        - in: path
+          name: accountId
+          required: true
+          schema:
+            type: string
+          description: Unique ID of the bank account
+      responses:
+        "200":
+          description: Bank account retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+              examples:
+                default:
+                  $ref: "#/components/examples/AccountExample"
+        "400":
+          description: Invalid account ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/ValidationErrorResponseExample"
+        "401":
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts/{accountId}/transactions:
+    get:
+      tags:
+        - Transaction Module
+      summary: Retrieve all transactions for a specific account.
+      description: |
+        Retrieve all transactions associated with a specific bank account, ordered newest first.
+        **Pagination Parameters:**
+        - `limit`: How many transactions to return (default: 20)
+        - `offset`: How many transactions to skip (default: 0)
+      operationId: getAccountTransactions
+      parameters:
+        - in: path
+          name: accountId
+          required: true
+          description: Unique ID of the bank account.
+          schema:
+            type: string
+        - in: query
+          name: limit
+          required: false
+          description: Number of transactions to return per page (max 100)
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - in: query
+          name: offset
+          required: false
+          description: Number of transactions to skip from the start of the list
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: List of transactions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionsListResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/TransactionsListResponseExample"
+        "400":
+          description: Bad request, invalid account ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized, invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden, user not allowed to access this resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found, no transactions associated with this account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /transactions/{transactionId}:
+    get:
+      tags:
+        - Transaction Module
+      summary: Retrieve a specific transaction by ID.
+      description: Retrieve detailed information about a specific transaction.
+      operationId: getTransactionById
+      parameters:
+        - in: path
+          name: transactionId
+          required: true
+          description: Unique ID of the transaction.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transaction retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/TransactionResponseExample"
+        "400":
+          description: Bad request, invalid transaction ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized, invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden, user not allowed to access this resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found, transaction does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags:
+        - Transaction Module
+      summary: Update a transactions details.
+      description: Update details of a specific transaction.
+      operationId: updateTransactionById
+      parameters:
+        - in: path
+          name: transactionId
+          required: true
+          description: Unique ID of the transaction.
+          schema:
+            type: string
+      requestBody:
+        description: Payload containing the transaction information to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTransactionRequest"
+      responses:
+        "200":
+          description: Transaction updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/TransactionResponseExample"
+        "400":
+          description: Bad request, invalid fields to update.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                default:
+                  $ref: "#/components/examples/ValidationErrorResponseExample"
+        "401":
+          description: Unauthorized, invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden, user not allowed to access this resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found, transaction does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    # Data Models
+    UserCredentials:
+      type: object
+      description: User credentials for authentication.
+      properties:
+        email:
+          type: string
+          description: The user's email address.
+          format: email
+        password:
+          type: string
+          description: The user's password.
+          writeOnly: true
+      required:
+        - email
+        - password
+
+    UserProfile:
+      type: object
+      description: User profile information.
+      properties:
+        firstName:
+          type: string
+          description: The user's first name.
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          description: The user's last name.
+          minLength: 1
+          maxLength: 50
+
+    Account:
+      type: object
+      description: Bank account information.
+      properties:
+        accountId:
+          type: string
+          description: Unique ID of the account.
+        label:
+          type: string
+          description: User-defined label for this account.
+        type:
+          $ref: "#/components/schemas/AccountType"
+        balance:
+          type: number
+          format: float
+          description: Current balance of the account.
+      required:
+        - accountId
+        - type
+        - balance
+
+    Transaction:
+      type: object
+      description: Transaction information.
+      properties:
+        transactionId:
+          type: string
+          description: Unique identifier of the transaction.
+        date:
+          type: string
+          description: When the transaction took place.
+          format: date-time
+        description:
+          type: string
+          description: Description of the transaction.
+        amount:
+          type: number
+          description: The amount of money involved in the transaction.
+          format: float
+        balanceAfterTransaction:
+          type: number
+          description: |
+            Calculated field — The account balance after the transaction.
+            Computed at runtime.
+          format: float
+          readOnly: true
+        type:
+          $ref: "#/components/schemas/TransactionType"
+        category:
+          $ref: "#/components/schemas/TransactionCategory"
+        notes:
+          type:
+            - string
+            - "null"
+          description: Additional notes about the transaction.
+      required:
+        - transactionId
+        - date
+        - description
+        - amount
+        - type
+
+    # Requests
+    LoginRequest:
+      type: object
+      description: Request body for user login.
+      properties:
+        email:
+          type: string
+          description: The user's email address.
+          format: email
+        password:
+          type: string
+          description: The user's password.
+          writeOnly: true
+      required:
+        - email
+        - password
+
+    SignupRequest:
+      type: object
+      description: Request body for user signup.
+      properties:
+        email:
+          type: string
+          description: The user's email address.
+          format: email
+        password:
+          type: string
+          minLength: 8
+          pattern: '^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$'
+          description: |
+            Password must be at least 8 characters long,
+            include at least one number and one special character.
+          writeOnly: true
+        firstName:
+          type: string
+          description: The user's first name.
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          description: The user's last name.
+          minLength: 1
+          maxLength: 50
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+
+    UpdateUserProfileRequest:
+      type: object
+      description: Request body for updating one or more user profile fields.
+      properties:
+        firstName:
+          type: string
+          description: The user's first name.
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          description: The user's last name.
+          minLength: 1
+          maxLength: 50
+      minProperties: 1
+      additionalProperties: false
+
+    UpdateTransactionRequest:
+      type: object
+      description: Request body for updating one or more of the editable transaction fields.
+      properties:
+        category:
+          $ref: "#/components/schemas/TransactionCategory"
+        notes:
+          type:
+            - string
+            - "null"
+      minProperties: 1
+      additionalProperties: false
+
+    # Responses
+    AuthenticationResponse:
+      type: object
+      description: Response body for user authentication.
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: JWT token for user authentication.
+                expiresIn:
+                  type: integer
+                  description: Token expiration duration in seconds (e.g., 3600 for 1 hour).
+          required: [data]
+
+    SignupResponse:
+      type: object
+      description: Response body for user signup.
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/UserCredentials"
+          required: [data]
+
+    UserProfileResponse:
+      type: object
+      description: Response body for user profile retrieval.
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                user:
+                  $ref: "#/components/schemas/UserProfile"
+          required: [data]
+
+    AccountsListResponse:
+      type: object
+      description: Response body for user accounts retrieval.
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                accounts:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Account"
+          required: [data]
+
+    TransactionsListResponse:
+      type: object
+      description: Response body for account transactions retrieval.
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                transactions:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Transaction"
+                total:
+                  type: integer
+                  description: Total number of transactions available
+                limit:
+                  type: integer
+                  description: Limit used in this request
+                offset:
+                  type: integer
+                  description: Offset used in this request
+          required: [data]
+
+    TransactionResponse:
+      type: object
+      description: Response body for transaction retrieval.
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                transaction:
+                  $ref: "#/components/schemas/Transaction"
+          required: [data]
+
+    # Error Responses
+    ValidationErrorResponse:
+      allOf:
+        - $ref: "#/components/schemas/ErrorResponse"
+        - type: object
+          properties:
+            details:
+              type: array
+              description: List of field-level validation errors
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  issue:
+                    type: string
+                required: [field, issue]
+          required: [details]
+
+    # Lists
+    AccountType:
+      type: string
+      description: The type of bank account.
+      enum:
+        - Checking
+        - Savings
+        - Credit Card
+
+    TransactionType:
+      type: string
+      description: The transaction type.
+      enum:
+        - Electronic
+        - Cash
+        - Card
+        - Cheque-Based
+        - Loan and Credit
+        - Standing Instructions & Auto-Debits
+        - Investment
+        - Foreign Exchange
+        - Fee/Charge
+        - Wallet and Virtual Account
+
+    TransactionCategory:
+      type: string
+      description: Category assigned to a transaction.
+      enum:
+        - Food
+        - Transportation
+        - Shopping
+        - Bills/Utilities
+        - Entertainment
+        - Travel
+        - Health/Wellness
+        - Education
+        - Personal Care
+        - Finance & Insurance
+        - Donations & Gifts
+        - Kids & Family
+        - Pets
+        - Salary
+        - Freelance/Consulting
+        - Investments
+        - Dividends
+        - Capital gains
+        - Rental Income
+        - Business Income
+        - Gifts/Inheritance
+        - Refunds & Reimbursements
+        - Interest Earned
+        - Bank Transfers
+        - Wallet Top-up
+        - Cash Withdrawals/Deposits
+        - Peer-to-Peer Transfers
+
+    ErrorCode:
+      type: string
+      enum:
+        - INVALID_CREDENTIALS
+        - ACCOUNT_LOCKED
+        - USER_ALREADY_EXISTS
+        - INVALID_EMAIL_FORMAT
+        - PASSWORD_TOO_WEAK
+        - ACCOUNT_NOT_FOUND
+        - TRANSACTION_NOT_FOUND
+        - UNAUTHORIZED
+        - FORBIDDEN
+        - INTERNAL_ERROR
+        - RATE_LIMITED
+        - VALIDATION_ERROR
+        - INVALID_TOKEN
+
+    # Response Models
+    BaseResponse:
+      type: object
+      description: Base response structure for all API responses.
+      properties:
+        status:
+          type: integer
+          description: HTTP status code.
+        message:
+          type: string
+          description: Human-readable message.
+      required: [status, message]
+
+    ErrorResponse:
+      type: object
+      description: Error response structure for API errors.
+      properties:
+        status:
+          type: integer
+          description: HTTP status code.
+        message:
+          type: string
+          description: Human-readable error message.
+        error:
+          $ref: "#/components/schemas/ErrorCode"
+          description: Machine-readable error type.
+      required: [status, message, error]
+
+  examples:
+    LoginRequestExample:
+      summary: A typical login request
+      value:
+        email: jane.doe@example.com
+        password: MyP@ssw0rd!
+
+    SignupRequestExample:
+      summary: A typical signup request
+      value:
+        firstName: Jane
+        lastName: Doe
+        email: jane.doe@example.com
+        password: MyP@ssw0rd!
+
+    AuthenticationResponseExample:
+      summary: Successful authentication response
+      value:
+        status: 200
+        message: Login successful
+        data:
+          token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+          expiresIn: 3600
+
+    UserProfileResponseExample:
+      summary: User profile data
+      value:
+        status: 200
+        message: Profile retrieved
+        data:
+          user:
+            firstName: Jane
+            lastName: Doe
+
+    AccountExample:
+      summary: Bank account object
+      value:
+        accountId: acc-001
+        type: Checking
+        balance: 2480.75
+        label: Main Checking
+
+    TransactionExample:
+      summary: Transaction object
+      value:
+        transactionId: txn-123
+        date: 2024-12-31T18:42:00Z
+        description: Netflix subscription
+        amount: -15.99
+        balanceAfterTransaction: 2464.76
+        type: Card
+        category: Entertainment
+        notes: Monthly streaming fee
+
+    ErrorResponseExample:
+      summary: Generic error response
+      value:
+        status: 400
+        error: VALIDATION_ERROR
+        message: One or more fields are invalid.
+        details:
+          - field: email
+            issue: Invalid email format
+
+    ValidationErrorResponseExample:
+      summary: Detailed validation failure
+      value:
+        status: 400
+        error: VALIDATION_ERROR
+        message: Invalid request payload
+        details:
+          - field: password
+            issue: Password must include at least one symbol
+
+    AccountsListResponseExample:
+      summary: Example response for list of accounts
+      value:
+        status: 200
+        message: Accounts retrieved successfully
+        data:
+          accounts:
+            - accountId: acc-001
+              type: Checking
+              label: Main Checking
+              balance: 2480.75
+            - accountId: acc-002
+              type: Savings
+              label: Emergency Fund
+              balance: 12500.00
+
+    TransactionResponseExample:
+      summary: Single transaction detail
+      value:
+        status: 200
+        message: Transaction retrieved successfully
+        data:
+          transaction:
+            transactionId: txn-456
+            date: 2024-12-25T10:30:00Z
+            description: Starbucks
+            amount: -5.75
+            balanceAfterTransaction: 2474.00
+            type: Card
+            category: Food
+            notes: Morning coffee
+
+    TransactionsListResponseExample:
+      summary: Example response for list of transactions
+      value:
+        status: 200
+        message: Transactions retrieved successfully
+        data:
+          transactions:
+            - transactionId: txn-457
+              date: 2024-12-24T15:00:00Z
+              description: Amazon Purchase
+              amount: -45.99
+              balanceAfterTransaction: 2428.01
+              type: Electronic
+              category: Shopping
+            - transactionId: txn-456
+              date: 2024-12-25T10:30:00Z
+              description: Starbucks
+              amount: -5.75
+              balanceAfterTransaction: 2474.00
+              type: Card
+              category: Food
+              notes: Morning coffee
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: JWT authentication.
+      scheme: bearer
+      bearerFormat: JWT

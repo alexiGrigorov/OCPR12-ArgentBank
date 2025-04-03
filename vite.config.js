@@ -7,7 +7,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   // plugins: [react(), svgr(), tailwindcss()],
   plugins: [react()],
-  base: "/OCPR11-SportSee/",
+  base: "/OCPR12-ArgentBank/",
   css: {
     modules: {
       localsConvention: "camelCaseOnly",
